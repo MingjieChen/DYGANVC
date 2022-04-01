@@ -16,6 +16,8 @@ dynamic convolution is introduced to improve speech content modeling while requi
 number of parameters. Objective and subjective evaluation was performed using the VCC2020 task, 
 yielding MOS scores of up to 3.86, and character error rates as low as 4.3\%. This was achieved with approximately half the number of model parameters, and up to 8 times faster decoding speed. 
 
+[[paper](https://arxiv.org/abs/2203.17172)] [[demo](https://mingjiechen.github.io/dygan-vc)]
+
 ## Dataset
 [VCC2020 track1](https://github.com/nii-yamagishilab/VCC2020-database)
 
