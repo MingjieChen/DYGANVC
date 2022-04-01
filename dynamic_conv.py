@@ -35,7 +35,7 @@ class LightConv(nn.Module):
         return conv_out
 class DynamicConv(nn.Module):   
 
-    def __init__(self, dim_in, dim_out, kernel_size = 3, spk_emb_dim = 128, num_heads = 8, use_kconv = False, wada_kernel = 3, res = True, ln = True, rel_pos = False):
+    def __init__(self, dim_in, dim_out, kernel_size = 3, spk_emb_dim = 128, num_heads = 8, wada_kernel = 3, res = True, ln = True):
         
         super(DynamicConv, self).__init__()
         
@@ -47,17 +47,8 @@ class DynamicConv(nn.Module):
         self.use_ln = ln
         self.use_kconv = use_kconv
         self.k_layer = nn.Linear(dim_in, self.dim_out)
-        if use_kconv:
-            self.conv_kernel_layer = nn.Sequential(
-                SeparableConv1d(dim_out, dim_out, kernel_size),
-                nn.Linear(dim_out, kernel_size*num_heads)
-                )
-        else:
-            self.conv_kernel_layer = nn.Linear(dim_out, kernel_size*num_heads)
+        self.conv_kernel_layer = nn.Linear(dim_out, kernel_size*num_heads)
         
-        self.rel_pos = rel_pos #relative positional encoding, https://github.com/espnet/espnet/blob/master/espnet/nets/pytorch_backend/transformer/attention.py
-        if rel_pos:
-            self.linear_pos = nn.Linear(dim_in, dim_in)    
             
         
         
@@ -66,11 +57,6 @@ class DynamicConv(nn.Module):
             self.ln = nn.LayerNorm(dim_out)
         self.act = nn.GLU(dim = -1)
     
-    def rel_shift(self, x):
-        '''compute relative positional encoding.
-            https://github.com/espnet/espnet/blob/master/espnet/nets/pytorch_backend/transformer/attention.py
-        '''    
-        return
     def forward(self, inputs ):
         tuple_input = False
         if isinstance(inputs, tuple):
@@ -91,46 +77,13 @@ class DynamicConv(nn.Module):
 
         
         # generate light weight conv kernels 
-        
         weights = self.conv_kernel_layer(k) # [B,T, dim_in] -> [B,T,num_heads*kernel_size]
         weights = weights.view(B, T, self.num_heads, self.kernel_size)
         # conduct conv
         layer_out = self.lconv(k, weights) 
         if self.res:
             layer_out = layer_out + residual    
-        #if self.use_ln:
-        #    layer_out = self.ln(layer_out)
         if tuple_input:
             return (layer_out.transpose(1,2), spk_trg)
         else:
             return layer_out.transpose(1,2)
-class SeparableConv1d(nn.Module):
-    '''This is a separable conv1d that doing depthwise conv and pointwise conv'''
-
-    def __init__(self, dim_in, dim_out, kernel_size, bias = True):
-        
-        super(SeparableConv1d,self).__init__()
-
-        self.dim_in = dim_in
-        self.dim_out = dim_out
-        self.kernel_size = kernel_size
-
-        self.depthconv = nn.Conv1d(dim_in, dim_in, groups = dim_in, kernel_size = kernel_size, stride = 1, padding = kernel_size // 2, bias = False)
-        self.pointconv = nn.Conv1d(dim_in, dim_out, kernel_size = 1, stride = 1, padding = 0, bias = False)
-        
-        if bias:
-            self.bias = nn.Parameter(torch.zeros(dim_out))
-        else:
-            self.register_parameter('bias', None)
-
-        nn.init.kaiming_normal_(self.depthconv.weight)
-        nn.init.kaiming_normal_(self.pointconv.weight)
-
-    def forward(self, x):
-        # x: [B, T, Cin]
-        # return: [B, T, Cout]
-        out = self.pointconv(self.depthconv(x.transpose(1,2))).transpose(1,2)
-
-        if self.bias is not None:
-            out += self.bias
-        return out

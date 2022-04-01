@@ -1,0 +1,77 @@
+log_dir: exp
+model_name: dygan_vc
+exp_name: dygan_vc_vq_spkemb
+pretrained_model: ""
+fp16_run: false
+trainer: VQMelSpkEmbLSTrainer
+epochs: 100
+num_speakers: 8
+save_freq: 20
+load_only_params: false
+
+
+data_loader:
+  dataset: VQMelSpkEmbDataset
+  data_dir: vcc20
+  vq_dir: dump/vqw2v_feat
+  batch_size: 8
+  speakers: speaker.json
+  spk_emb_dir: dump/spk_emb
+  shuffle: True
+  drop_last: False
+  num_workers: 4
+  min_length: 128
+  stats: vocoder/stats.npy
+model:
+  generator:
+    model_name: Generator0 
+    in_feat_dim: !!int 512
+    out_feat_dim: !!int 80
+    kernel: "9_9_9_9_9_9"
+    num_heads: "4_4_4_4_4_4"
+    num_res_blocks: 6
+    hidden_size: "256_256_256_256_256_256"
+    spk_emb_dim: 256
+    hid2_factor: 1
+    res_wff_kernel1: 3
+    res_wff_kernel2: 3
+    res_wadain_use_ln: false
+    res_wff_use_res: true
+    res_wff_use_act2: true
+    res_use_ln: true
+    use_kconv: false
+    wadain_beta: false
+    ff_block: WadainFF
+    conv_block: DynamicConv
+    scale: 1.0
+    out_kernel: 1
+    
+
+   
+  discriminator:
+    model_name: "Discriminator128"  
+    num_speakers: 8
+    kernel_size: 3
+    padding: 1
+
+loss:
+  g_loss:
+    lambda_cyc: 0.
+    lambda_id: 5.
+    lambda_adv: 1.
+  d_loss:
+    lambda_reg: 1.    
+    lambda_con_reg: 5.
+  
+  con_reg_epoch: 50000
+  
+
+optimizer:
+  discriminator:
+    lr: !!float 2e-5
+    weight_decay: !!float 1e-4
+    betas: [0.5, 0.999]
+  generator:
+    lr: !!float 1e-4
+    weight_decay: !!float 1e-4
+    betas: [0.5, 0.999]

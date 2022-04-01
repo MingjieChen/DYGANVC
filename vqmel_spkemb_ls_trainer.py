@@ -12,14 +12,8 @@ from torch import nn
 from tqdm import tqdm
 from munch import Munch
 import torch.nn.functional as F
-from transforms import build_transforms
 
     
-def sample_trg_spk(size, num_speakers):
-    from utils import to_categorical
-    spk_c = np.random.randint(0, num_speakers, size=size)
-    spk_c_cat = to_categorical(spk_c, num_speakers)
-    return torch.LongTensor(spk_c), torch.FloatTensor(spk_c_cat)
 
 # for adversarial loss
 def adv_loss(logits, target):
@@ -54,15 +48,7 @@ def compute_g_loss(nets, args, batch):
     # adversarial loss
     x_fake = nets.generator(x_real, y_trg_emb, x_vq)
     out = nets.discriminator(x_fake, y_trg) 
-    #loss_adv = adv_loss(out, 1)
     loss_adv = torch.mean( (1.0 - out)**2)
-    
-    
-    # cycle-consistency loss
-    #s_src = nets.speaker_encoder(z_src, y_src)
-    #x_cyc = nets.generator(x_fake, y_src_emb, x_vq)
-    #loss_cyc = torch.mean(torch.abs(x_cyc - x_real))
-    
     
     # identity mapping loss
     x_id = nets.generator(x_real, y_src_emb, x_vq)
@@ -72,12 +58,11 @@ def compute_g_loss(nets, args, batch):
     
     loss = args.lambda_adv * loss_adv  \
            + args.lambda_id * loss_id \
-           #+ args.lambda_cyc * loss_cyc
 
     return loss, Munch(adv=loss_adv.item(),
                        id=loss_id.item(),
                        )
-def compute_d_loss(nets, args, batch, use_con_reg = False):
+def compute_d_loss(nets, args, batch):
     args = Munch(args)
     
     x_real, y_src, y_src_emb, x_trg, y_trg, y_trg_emb, x_src_ref, x_vq = batch
@@ -85,7 +70,6 @@ def compute_d_loss(nets, args, batch, use_con_reg = False):
     # with real audios
     x_real.requires_grad_()
     real_out = nets.discriminator(x_real, y_src)
-    #loss_real = adv_loss(out, 1)
     loss_real = torch.mean((1.0 - real_out)**2)
     
     if nets.discriminator.training:
@@ -94,30 +78,20 @@ def compute_d_loss(nets, args, batch, use_con_reg = False):
         loss_reg = torch.FloatTensor([0]).to(x_real.device)
     
     loss_con_reg = torch.FloatTensor([0]).to(x_real.device)
-    if use_con_reg:
-        t = build_transforms()
-        out_aug = nets.discriminator(t(x_real).detach(), y_src)
-        loss_con_reg += F.smooth_l1_loss(real_out, out_aug)
     
     # with fake audios
     with torch.no_grad():
         x_fake = nets.generator(x_real, y_trg_emb, x_vq)
     out = nets.discriminator(x_fake, y_trg)
-    #loss_fake = adv_loss(out, 0)
     loss_fake = torch.mean(out**2)
-    if use_con_reg:
-        out_aug = nets.discriminator(t(x_fake).detach(), y_trg)
-        loss_con_reg += F.smooth_l1_loss(out, out_aug)
     
         
 
-    loss = loss_real + loss_fake  + args.lambda_reg * loss_reg\
-            + args.lambda_con_reg * loss_con_reg
+    loss = loss_real + loss_fake  + args.lambda_reg * loss_reg
 
     return loss, Munch(real=loss_real.item(),
                        fake=loss_fake.item(),
                        reg=loss_reg.item(),
-                       con_reg=loss_con_reg.item()
                        )
 
 
@@ -255,28 +229,27 @@ class VQMelSpkEmbLSTrainer(object):
 
             ### load data
             batch = [b.to(self.device) for b in batch]
-            # train the discriminator (by random reference)
+            
             self.optimizer.zero_grad()
             if scaler is not None:
                 with torch.cuda.amp.autocast():
-                    d_loss, d_losses_latent = compute_d_loss(self.model, self.args.d_loss, batch, use_con_reg)
+                    d_loss, d_losses = compute_d_loss(self.model, self.args.d_loss, batch, use_con_reg)
                 scaler.scale(d_loss).backward()
             else:
-                d_loss, d_losses_latent = compute_d_loss(self.model, self.args.d_loss, batch, use_con_reg)
+                d_loss, d_losses = compute_d_loss(self.model, self.args.d_loss, batch, use_con_reg)
                 d_loss.backward()
             self.optimizer.step('discriminator', scaler=scaler)
             
 
 
-            # train the generator (by random reference)
             self.optimizer.zero_grad()
             if scaler is not None:
                 with torch.cuda.amp.autocast():
-                    g_loss, g_losses_latent = compute_g_loss(
+                    g_loss, g_losses = compute_g_loss(
                         self.model, self.args.g_loss, batch)
                 scaler.scale(g_loss).backward()
             else:
-                g_loss, g_losses_latent = compute_g_loss(
+                g_loss, g_losses = compute_g_loss(
                     self.model, self.args.g_loss, batch)
                 g_loss.backward()
 
@@ -287,14 +260,14 @@ class VQMelSpkEmbLSTrainer(object):
             
             d_loss_string = f" epoch {self.epochs}, iters {train_steps_per_epoch}"
             g_loss_string = f" epoch {self.epochs}, iters {train_steps_per_epoch}"
-            for key in d_losses_latent:
-                train_losses["train/%s" % key].append(d_losses_latent[key])
-                d_loss_string += f" {key}:{d_losses_latent[key]:.5f} "
+            for key in d_losses:
+                train_losses["train/%s" % key].append(d_losses[key])
+                d_loss_string += f" {key}:{d_losses[key]:.5f} "
             print(d_loss_string)    
-            for key in g_losses_latent:
-                train_losses["train/%s" % key].append(g_losses_latent[key])
-                g_loss_string += f" {key}:{g_losses_latent[key]:.5f} "
-            print(g_loss_string, flush = True)    
+            for key in g_losses:
+                train_losses["train/%s" % key].append(g_losses[key])
+                g_loss_string += f" {key}:{g_losses[key]:.5f} "
+            print(g_loss_string)    
             print()
             self.steps += 1
 
@@ -313,17 +286,17 @@ class VQMelSpkEmbLSTrainer(object):
             batch = [b.to(self.device) for b in batch]
 
             #  discriminator
-            d_loss, d_losses_latent = compute_d_loss(
+            d_loss, d_losses = compute_d_loss(
                 self.model, self.args.d_loss, batch)
 
             # train the generator
-            g_loss, g_losses_latent = compute_g_loss(
+            g_loss, g_losses = compute_g_loss(
                 self.model, self.args.g_loss, batch)
 
-            for key in d_losses_latent:
-                eval_losses["eval/%s" % key].append(d_losses_latent[key])
-            for key in g_losses_latent:
-                eval_losses["eval/%s" % key].append(g_losses_latent[key])
+            for key in d_losses:
+                eval_losses["eval/%s" % key].append(d_losses[key])
+            for key in g_losses:
+                eval_losses["eval/%s" % key].append(g_losses[key])
 
             
 
@@ -331,7 +304,7 @@ class VQMelSpkEmbLSTrainer(object):
         eval_string = f"epoch {self.epochs}, eval: "
         for key, value in eval_losses.items():
             eval_string += f"{key}: {value:.6f} "
-        print(eval_string, flush = True)    
+        print(eval_string)    
         print()
         return eval_losses
 

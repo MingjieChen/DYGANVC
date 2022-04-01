@@ -6,7 +6,6 @@ import yaml
 import shutil
 import numpy as np
 import torch
-#import click
 import warnings
 warnings.simplefilter('ignore')
 
@@ -17,23 +16,11 @@ from torch.utils.tensorboard import SummaryWriter
 from data_loader import build_data_loader
 from model import build_model
 from optimizers import build_optimizer
-from trainer import Trainer
-from vqmel_trainer import VQMelTrainer
-from vqmel_spenc_ls_trainer import VQMelSPEncLSTrainer
-from vqmel_spenc_ls_srcref_trainer import VQMelSPEncLSSrcRefTrainer
 from vqmel_spkemb_ls_trainer import VQMelSpkEmbLSTrainer
-from ls_trainer import LSTrainer
-from ls_trainer1 import LSTrainer1 
-from v2_trainer import Trainer as V2Trainer
-from vq_v2_trainer import VQV2Trainer
-from vq_v2_trainer1 import VQV2Trainer1
-from vq_v2_content_trainer import VQV2ContentTrainer
 import argparse
 import random
 torch.backends.cudnn.benchmark = True #
 
-#@click.command()
-#@click.option('-p', '--config_path', default='Configs/config.yml', type=str)
 
 def set_seed(seed):
     random.seed(seed)
