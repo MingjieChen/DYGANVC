@@ -21,7 +21,7 @@ yielding MOS scores of up to 3.86, and character error rates as low as 4.3\%. Th
 
 ## Dependencies
 1. [fairseq](https://github.com/pytorch/fairseq)
-2. [speaker embeddings](https://github.com/kan-bayashi/ParallelWaveGAN)
+2. [Parallel WaveGAN vocoder](https://github.com/kan-bayashi/ParallelWaveGAN)
 
 ## How to run
 1. clone repository
