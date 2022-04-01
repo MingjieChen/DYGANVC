@@ -30,16 +30,17 @@ git clone https://github.com/MingjieChen/DYGANVC.git
 cd DYGANVC
 ```
 
-2. Create conda env and install pytorch
+2. Create conda env and install pytorch 1.7 through conda
 ```bash
 conda create --name env_name python==3.7
+conda activate env_name
 conda install pytorch==1.7.1 torchvision==0.8.2 torchaudio==0.7.2 cudatoolkit=11.0 -c pytorch
 ```
 Choose your own configs for cudatoolkit version according to your own GPU.
 
 3. install packages
 ```bash
-pip install fairseq librosa parallel_wavegan munch pyyaml SoundFile tqdm scikit-learn
+pip install fairseq librosa parallel_wavegan munch pyyaml SoundFile tqdm scikit-learn tensorboardX
 ```
 
 4. download dataset and unzip dataset to vcc20/
