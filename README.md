@@ -46,6 +46,9 @@ pip install fairseq librosa parallel_wavegan munch pyyaml SoundFile tqdm scikit-
 ```
 
 4. download dataset and unzip dataset to vcc20/
+```bash
+./data_download.sh vcc20
+```
 
 
 
