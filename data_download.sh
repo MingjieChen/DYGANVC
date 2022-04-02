@@ -44,19 +44,19 @@ if [ ! -e ${db}/.done ]; then
     for trgspk in "${trgspks_task1[@]}"; do
         mv vcc2020_database_groundtruth/${trgspk}/*.wav target_task1/${trgspk}/
     done
-    for trgspk in "${trgspks_task2[@]}"; do
-        mv vcc2020_database_groundtruth/${trgspk}/*.wav target_task2/${trgspk}/
-    done
+    #for trgspk in "${trgspks_task2[@]}"; do
+    #    mv vcc2020_database_groundtruth/${trgspk}/*.wav target_task2/${trgspk}/
+    #done
     mv target_task1/* ./
-    mv target_task2/* ./
+    #mv target_task2/* ./
 
     # move transcriptions
     mkdir prompts
     cat vcc2020_database_transcriptions/transcriptions_training/vcc2020_database_training_Eng_transcriptions.txt \
         vcc2020_database_transcriptions/transcriptions_evaluation/vcc2020_database_evaluation_transcriptions.txt > prompts/Eng_transcriptions.txt
-    mv vcc2020_database_transcriptions/transcriptions_training/vcc2020_database_training_Fin_transcriptions.txt prompts/Fin_transcriptions.txt
-    mv vcc2020_database_transcriptions/transcriptions_training/vcc2020_database_training_Ger_transcriptions.txt prompts/Ger_transcriptions.txt
-    mv vcc2020_database_transcriptions/transcriptions_training/vcc2020_database_training_Man_transcriptions.txt prompts/Man_transcriptions.txt
+    #mv vcc2020_database_transcriptions/transcriptions_training/vcc2020_database_training_Fin_transcriptions.txt prompts/Fin_transcriptions.txt
+    #mv vcc2020_database_transcriptions/transcriptions_training/vcc2020_database_training_Ger_transcriptions.txt prompts/Ger_transcriptions.txt
+    #mv vcc2020_database_transcriptions/transcriptions_training/vcc2020_database_training_Man_transcriptions.txt prompts/Man_transcriptions.txt
     rm -rf vcc2020_database_transcriptions
 
     # delete folders and files
