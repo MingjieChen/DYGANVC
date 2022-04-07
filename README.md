@@ -50,5 +50,9 @@ pip install fairseq librosa parallel_wavegan munch pyyaml SoundFile tqdm scikit-
 ./data_download.sh vcc20
 ```
 
+5. extract speaker embeddings
+```bash
+./extract_speaker_embed.sh
+```
 
 

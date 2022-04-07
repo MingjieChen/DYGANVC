@@ -2,3 +2,4 @@ vcc20/
 dump/
 vqw2v/
 *.wav
+speaker_encoder/__pycache__

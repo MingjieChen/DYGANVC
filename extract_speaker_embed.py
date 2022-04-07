@@ -20,14 +20,13 @@ def print_network(model, name):
     print(name,flush=True)
     print("The number of parameters: {}".format(num_params), flush=True)
 print_network(encoder, 'encoder')
-sys.exit(0)
 # load speakers
 speakers = json.load(open(speaker_path))
 
 # loop through speakers
 import glob
 for spk in speakers:
-    audio_files = glob.glob(os.path.join(data_dir,f'{spk}/*.wav'))
+    audio_files = list(glob.glob(os.path.join(data_dir,f'{spk}/E1*.wav'))) + list(glob.glob(os.path.join(data_dir,f'{spk}/E2*.wav')))
     audios = [preprocess_wav(audio,24000) for audio in audio_files]
     spk_emb = encoder.embed_speaker(audios)
     print(f'spk_emb {spk} {spk_emb.shape}')
