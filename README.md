@@ -56,4 +56,14 @@ pip install fairseq parallel_wavegan munch pyyaml SoundFile tqdm scikit-learn te
 ./extract_speaker_embed.sh
 ```
 
+6. download vqwav2vec ckpt
+```bash
+mkdir vqw2v
+cd vqw2v
+wget https://dl.fbaipublicfiles.com/fairseq/wav2vec/vq-wav2vec_kmeans.pt
+```
 
+7. extract vqwav2vec features
+```bash
+./vqw2v_feat_extract.sh
+```

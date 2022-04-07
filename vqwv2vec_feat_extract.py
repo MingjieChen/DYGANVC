@@ -9,9 +9,14 @@ if len(sys.argv) != 3:
     raise Exception("two arguments needed")
 audio_dir=sys.argv[1]
 out_dir=sys.argv[2]
+ckpt=sys.argv[3]
 
 import glob
 import os
+from concurrent.futures import ProcessPoolExecutor
+from functools import partial
+import subprocess
+from tqdm import tqdm
 audio_paths = list(glob.glob(os.path.join(audio_dir,'*/*.wav')))
 def load_wav(path):
     sr, x = wavfile.read(path)
@@ -19,27 +24,25 @@ def load_wav(path):
     if x.dtype == np.int16:
         x = x.astype(np.float32) / signed_int16_max
     print(f'24khz wav {x.shape}')
+    x,_ = librosa.effects.trim(x,top_db=25,frame_length=1024,hop_length=256)    
+    print(f'after trim {x.shape}')
     if sr != 16000:
         x = librosa.resample(x, sr, 16000)
     print(f'resample {x.shape}')
     x = np.clip(x, -1.0, 1.0)
 
     return x
-def process(_audio_paths, out_dir):
-    cp = 'vqw2v/vq-wav2vec_kmeans.pt'
+def process(ckpt, _audio_paths, out_dir):
     model, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([cp])
     model = model[0]
     model.eval()
     for audio_path in _audio_paths:
         wav = load_wav(audio_path)
-        #window_size=480
         
-        #wav_input_16khz = wav
-        #wav_input_16khz = np.pad(wav, pad_width = (window_size//2,window_size//2), mode='reflect')
-        #print(f"after pad {wav_input_16khz.shape}")
+        wav_input_16khz = wav
         
-        wav_tensor = torch.FloatTensor(wav).unsqueeze(0)
-        z = model.feature_extractor(wav_tensor)
+        wav_input_16khz = torch.FloatTensor(wav_input_16khz).unsqueeze(0)
+        z = model.feature_extractor(wav_input_16khz)
         print(f"z {z.size()}")
         dense, idxs = model.vector_quantizer.forward_idx(z)
 
@@ -50,7 +53,7 @@ def process(_audio_paths, out_dir):
         spk=os.path.basename(os.path.dirname(audio_path))
         os.makedirs(os.path.join(out_dir,spk), exist_ok = True)
         np.save(os.path.join(out_dir, spk, file_id+'_dense'), dense)
-        #np.save(os.path.join(out_dir, spk, file_id+'_idxs'), idxs)
+        np.save(os.path.join(out_dir, spk, file_id+'_idxs'), idxs)
 
-process(audio_paths, out_dir )
+process(ckpt, audio_paths, out_dir )
 
