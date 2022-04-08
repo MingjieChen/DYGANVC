@@ -46,12 +46,12 @@ def compute_g_loss(nets, args, batch):
     
     
     # adversarial loss
-    x_fake = nets.generator(x_real, y_trg_emb, x_vq)
+    x_fake = nets.generator(y_trg_emb, x_vq)
     out = nets.discriminator(x_fake, y_trg) 
     loss_adv = torch.mean( (1.0 - out)**2)
     
     # identity mapping loss
-    x_id = nets.generator(x_real, y_src_emb, x_vq)
+    x_id = nets.generator(y_src_emb, x_vq)
     loss_id = torch.mean(torch.abs(x_id - x_real))
     
     
@@ -81,7 +81,7 @@ def compute_d_loss(nets, args, batch):
     
     # with fake audios
     with torch.no_grad():
-        x_fake = nets.generator(x_real, y_trg_emb, x_vq)
+        x_fake = nets.generator(y_trg_emb, x_vq)
     out = nets.discriminator(x_fake, y_trg)
     loss_fake = torch.mean(out**2)
     
@@ -233,10 +233,10 @@ class VQMelSpkEmbLSTrainer(object):
             self.optimizer.zero_grad()
             if scaler is not None:
                 with torch.cuda.amp.autocast():
-                    d_loss, d_losses = compute_d_loss(self.model, self.args.d_loss, batch, use_con_reg)
+                    d_loss, d_losses = compute_d_loss(self.model, self.args.d_loss, batch)
                 scaler.scale(d_loss).backward()
             else:
-                d_loss, d_losses = compute_d_loss(self.model, self.args.d_loss, batch, use_con_reg)
+                d_loss, d_losses = compute_d_loss(self.model, self.args.d_loss, batch)
                 d_loss.backward()
             self.optimizer.step('discriminator', scaler=scaler)
             

@@ -16,7 +16,7 @@ data_loader:
   vq_dir: dump/vqw2v_feat
   batch_size: 8
   speakers: speaker.json
-  spk_emb_dir: dump/spk_emb
+  spk_emb_dir: dump/ppg-vc-spks
   shuffle: True
   drop_last: False
   num_workers: 4

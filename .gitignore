@@ -3,3 +3,5 @@ dump/
 vqw2v/
 *.wav
 speaker_encoder/__pycache__
+exp/
+__pycache__/

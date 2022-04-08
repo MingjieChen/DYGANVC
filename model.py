@@ -1,7 +1,7 @@
 
 import importlib
-from .generator import *
-from .discriminator import *
+from generator import *
+from discriminator import *
 from munch import Munch
 import copy
 

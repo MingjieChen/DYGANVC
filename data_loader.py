@@ -114,7 +114,8 @@ class VQMelSpkEmbDataset(data.Dataset):
         vq_length = vqw2v_dense.shape[0]
         if mel_length > vq_length:
             pad_vec = vqw2v_dense[-1,:]
-            vqw2v_dense = np.concatenate((vqw2v_dense, np.repeat(pad_vec, mel_length - vq_length, 0)),1)
+            repeated_pad_vec = np.tile(pad_vec, mel_length - vq_length).reshape(mel_length-vq_length,512)
+            vqw2v_dense = np.concatenate((vqw2v_dense, repeated_pad_vec),0)
         elif mel_length < vq_length:
             vqw2v_dense = vqw2v_dense[:mel_length,:]    
         assert src_mel.shape[0] == vqw2v_dense.shape[0], f"mel {src_mel.shape} vq {vqw2v_dense.shape}"

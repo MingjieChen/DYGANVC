@@ -5,8 +5,6 @@ import sys
 import numpy as np
 import librosa
 from scipy.io import wavfile
-if len(sys.argv) != 3:
-    raise Exception("two arguments needed")
 audio_dir=sys.argv[1]
 out_dir=sys.argv[2]
 ckpt=sys.argv[3]
@@ -24,15 +22,13 @@ def load_wav(path):
     if x.dtype == np.int16:
         x = x.astype(np.float32) / signed_int16_max
     print(f'24khz wav {x.shape}')
-    x,_ = librosa.effects.trim(x,top_db=25,frame_length=1024,hop_length=256)    
-    print(f'after trim {x.shape}')
     if sr != 16000:
         x = librosa.resample(x, sr, 16000)
     print(f'resample {x.shape}')
     x = np.clip(x, -1.0, 1.0)
 
     return x
-def process(ckpt, _audio_paths, out_dir):
+def process(cp, _audio_paths, out_dir):
     model, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([cp])
     model = model[0]
     model.eval()
@@ -53,7 +49,6 @@ def process(ckpt, _audio_paths, out_dir):
         spk=os.path.basename(os.path.dirname(audio_path))
         os.makedirs(os.path.join(out_dir,spk), exist_ok = True)
         np.save(os.path.join(out_dir, spk, file_id+'_dense'), dense)
-        np.save(os.path.join(out_dir, spk, file_id+'_idxs'), idxs)
 
 process(ckpt, audio_paths, out_dir )
 

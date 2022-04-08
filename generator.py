@@ -3,8 +3,8 @@ import torch.nn as nn
 import numpy as np
 import argparse
 import torch.nn.functional as F
-from .wadain import WadaIN 
-from .dynamic_conv import DynamicConv 
+from wadain import WadaIN 
+from dynamic_conv import DynamicConv 
 import math
 
 class WadainFF(nn.Module):

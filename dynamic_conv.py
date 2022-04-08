@@ -45,7 +45,6 @@ class DynamicConv(nn.Module):
         self.num_heads = num_heads
         self.res = res
         self.use_ln = ln
-        self.use_kconv = use_kconv
         self.k_layer = nn.Linear(dim_in, self.dim_out)
         self.conv_kernel_layer = nn.Linear(dim_out, kernel_size*num_heads)
         
