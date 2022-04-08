@@ -72,3 +72,8 @@ wget https://dl.fbaipublicfiles.com/fairseq/wav2vec/vq-wav2vec_kmeans.pt
 ```bash
 ./run_train.sh
 ```
+
+9. inference
+```bash
+python inference.py
+```

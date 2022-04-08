@@ -1,7 +1,6 @@
 import sys
-sys.path.insert(0,'/share/mini1/res/t/vc/studio/timap-en/vcc2020/model')
 import torch
-from new_dygan_vc.model import build_model
+from model import build_model
 import librosa
 from speaker_encoder.voice_encoder import SpeakerEncoder
 from speaker_encoder.audio import preprocess_wav
@@ -9,11 +8,13 @@ import fairseq
 from scipy.io import wavfile
 import numpy as np
 from tqdm import tqdm
-test_list = '/share/mini1/res/t/vc/studio/timap-en/vcc2020/test_meta.txt'
-model_ckpt = '/share/mini1/res/t/vc/studio/timap-en/vcc2020/exp/new_dygan_vc/0223_mel_G0_vqmel_spkemb_3/epoch_100.pth'
-model_config = '/share/mini1/res/t/vc/studio/timap-en/vcc2020/exp/new_dygan_vc/0223_mel_G0_vqmel_spkemb_3/mel_G0_vqmel_spkemb_ls.yml'
+import soundfile as sf
+test_list = 'test_meta.txt'
+model_ckpt = 'exp/dygan_vc/dygan_vc_vq_spkemb/epoch_100.pth'
+model_config = 'config.yml'
 speaker_encoder_ckpt = 'speaker_encoder/ckpt/pretrained_bak_5805000.pt'
-vqwav2vec_ckpt = '/share/mini1/res/t/vc/studio/timap-en/vcc2020/fairseq/examples/wav2vec/ckpt/vq-wav2vec_kmeans.pt'
+vqwav2vec_ckpt = 'vqw2v/vq-wav2vec_kmeans.pt'
+vocoder_path = 'vocoder/checkpoint-400000steps.pkl'
 
 # test_list
 
@@ -46,7 +47,6 @@ print('load vqwav2vec')
 # vocoder
 from parallel_wavegan.utils import load_model
 
-vocoder_path = '/share/mini1/res/t/vc/studio/tiresyn-en/vcc2020/ParallelWaveGAN/egs/vcc2020/voc1/exp/train_task1_parallel_wavegan.task1/checkpoint-400000steps.pkl'
 vocoder = load_model(vocoder_path)
 vocoder.remove_weight_norm()
 vocoder.eval()
@@ -56,6 +56,8 @@ import time
 start = time.time()
 for meta in tqdm(test_meta):
     src_wav_path, trg_wav_path = meta.split(' ')
+    src_spk, f_id = src_wav_path.split('/')[0], src_wav_path.split('/')[-1]
+    trg_spk = trg_wav_path.split('/')[0]
 
     # extract vqwav2vec features
     
@@ -79,10 +81,11 @@ for meta in tqdm(test_meta):
 
 
     # inference dygan
-    converted_feat = model.generator(None, trg_spk_emb, vqwav2vec_feature)
+    converted_feat = model.generator(trg_spk_emb, vqwav2vec_feature)
     
     cvt_wav = vocoder.inference(converted_feat.transpose(-1,-2).squeeze())
-
+    converted_wav_path = os.path.join('converted_wavs',f'{src_spk}_{trg_spk}_{f_id}')
+    sf.write(converted_wav_path, cvt_wav.data.numpy(), 24000, "PCM_16")   
 print(f'total time {time.time() - start}')
 
 
