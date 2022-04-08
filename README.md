@@ -67,3 +67,8 @@ wget https://dl.fbaipublicfiles.com/fairseq/wav2vec/vq-wav2vec_kmeans.pt
 ```bash
 ./vqw2v_feat_extract.sh
 ```
+
+8. start training
+```bash
+./run_train.sh
+```
