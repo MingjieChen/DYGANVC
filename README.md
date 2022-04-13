@@ -43,7 +43,7 @@ Choose your own cudatoolkit version according to your own GPU.
 
 3. install packages
 ```bash
-pip install fairseq parallel_wavegan munch pyyaml SoundFile tqdm scikit-learn tensorboardX
+pip install fairseq parallel_wavegan munch pyyaml SoundFile tqdm scikit-learn tensorboardX webrtcvad
 ```
 
 4. download dataset and unzip dataset to vcc20/
