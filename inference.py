@@ -1,3 +1,4 @@
+import os
 import sys
 import torch
 from model import build_model
@@ -84,6 +85,7 @@ for meta in tqdm(test_meta):
     converted_feat = model.generator(trg_spk_emb, vqwav2vec_feature)
     
     cvt_wav = vocoder.inference(converted_feat.transpose(-1,-2).squeeze())
+    os.makedirs('converted_wavs', exist_ok=True)
     converted_wav_path = os.path.join('converted_wavs',f'{src_spk}_{trg_spk}_{f_id}')
     sf.write(converted_wav_path, cvt_wav.data.numpy(), 24000, "PCM_16")   
 print(f'total time {time.time() - start}')
